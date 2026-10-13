@@ -63,7 +63,7 @@ user-stories/user-story-N.md
 automated-documentation-sync/
 ├── .claude/
 │   ├── agents/             # Specialist agent definitions (9 agents + orchestrator)
-│   ├── skills/             # One folder per skill, each with a SKILL.md
+│   ├── skills/             # One markdown file per skill
 │   ├── hooks/              # Hook scripts
 │   └── settings.json       # Hooks configuration
 ├── user-stories/           # Your input: one .md file per story
@@ -118,5 +118,5 @@ automated-documentation-sync/
 3. Add any new output paths to `CLAUDE.md` under File Conventions
 
 ### Adding a new skill
-1. Create `.claude/skills/<skill-name>/SKILL.md` with YAML frontmatter (`name`, `description`) and the structured template
+1. Create `.claude/skills/<skill-name>.md` with YAML frontmatter (`name`, `description`) and the structured template
 2. Reference it by name from the relevant agent's system prompt

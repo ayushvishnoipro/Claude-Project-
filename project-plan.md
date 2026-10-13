@@ -119,12 +119,12 @@ Tasks:
 **Goal**: Create reusable skill files that agents will invoke for structured tasks.
 
 Tasks:
-- [ ] `.claude/skills/requirement-analysis/SKILL.md` — structured Q&A template for eliciting requirements
-- [ ] `.claude/skills/architecture-design/SKILL.md` — component + data flow design template
-- [ ] `.claude/skills/implementation-planning/SKILL.md` — dependency-ordered task breakdown template
-- [ ] `.claude/skills/documentation-sync/SKILL.md` — diff-to-doc update pattern
-- [ ] `.claude/skills/code-review/SKILL.md` — review checklist (correctness, security, error handling, DRY, test coverage, dependency safety)
-- [ ] `.claude/skills/verification/SKILL.md` — test run + quality gate template
+- [ ] `.claude/skills/requirement-analysis.md` — structured Q&A template for eliciting requirements
+- [ ] `.claude/skills/architecture-design.md` — component + data flow design template
+- [ ] `.claude/skills/implementation-planning.md` — dependency-ordered task breakdown template
+- [ ] `.claude/skills/documentation-sync.md` — diff-to-doc update pattern
+- [ ] `.claude/skills/code-review.md` — review checklist (correctness, security, error handling, DRY, test coverage, dependency safety)
+- [ ] `.claude/skills/verification.md` — test run + quality gate template
 
 **Deliverable**: 6 skill files committed.
 
