@@ -1,31 +1,64 @@
 ---
 name: documentation-sync
-description: Method for keeping docs/ files in sync with the implemented source code and writing a sync report. Use after implementation to update docs that diverged from src/.
+description: Keep docs/ files in sync with the implemented source code and produce a sync report of what changed
 ---
 
-# Documentation Sync
-
 ## Role
-Act as a technical writer reviewing code changes.
+
+Act as a technical writer reviewing code changes. Your job is to make the documentation match the code that was actually built, changing as little as possible.
+
+---
 
 ## Input
-- `src/` directory contents
-- Existing `docs/*.md` files
+
+- `src/` directory contents (required)
+- Existing `docs/*.md` files (required)
+
+---
 
 ## Sync Process
-1. Diff the current code against what the docs describe.
-2. Identify: new functions or classes not documented, removed ones still referenced, changed signatures, new dependencies.
-3. Update the affected sections in the relevant docs file in place.
-4. Leave sections that are still accurate untouched.
-5. If the implementation deviates from `docs/architecture.md`, flag it clearly in the report.
 
-## Output
-- In-place updates to the affected `docs/*.md` files.
-- A sync report at `output/reports/doc-sync-report.md` listing every change: file, section, what changed and why. If nothing changed, say so.
+1. **Read the current code** in `src/` and the existing docs.
+2. **Diff the code against what the docs describe.**
+3. **Identify**: new functions or classes not documented, removed ones still referenced, changed signatures, new dependencies.
+4. **Update the affected sections** in the relevant docs file, in place.
+5. **Leave accurate sections untouched** — do not rewrite them.
+6. **Flag deviations**: if the implementation departs from `docs/architecture.md`, say so clearly in the report.
 
-## Rules
-- Never delete documented design decisions, only update them.
-- Mark deprecated items as `[DEPRECATED]` rather than deleting them.
-- Keep docs concise. Do not pad with obvious information.
-- Do not edit `docs/changelog.md`; only the orchestrator writes it.
-- Never print secret values.
+---
+
+## Output Format
+
+Update the affected `docs/*.md` files in place, then write the report to `output/reports/doc-sync-report.md` using this exact structure:
+
+````markdown
+# Documentation Sync Report
+
+## Summary
+
+[1–2 sentences: how many files and sections changed]
+
+## Changes Made
+
+| File | Section | Change | Reason |
+|---|---|---|---|
+| `docs/architecture.md` | Component Descriptions | [What changed] | [Code reference] |
+
+*(If nothing changed: "No changes needed.")*
+
+## Deviations From Design
+
+[Each place the implementation departs from the architecture, or "None."]
+````
+
+---
+
+## Quality Criteria
+
+Before finalizing, verify:
+
+- Documented design decisions are never deleted, only updated
+- Deprecated items are marked `[DEPRECATED]`, not removed
+- Docs stay concise, with no padding
+- `docs/changelog.md` is not edited (only the orchestrator writes it)
+- No secret values are printed

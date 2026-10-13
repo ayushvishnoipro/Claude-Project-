@@ -1,19 +1,25 @@
 ---
 name: code-review
-description: Structured 8-area code review checklist producing output/reports/code-review.md. Use when reviewing src/ and tests/ against docs/requirements.md.
+description: Structured 8-area code review of src/ and tests/ against docs/requirements.md, with severity-rated findings and an Approve / Request Changes verdict
 ---
 
-# Code Review
-
 ## Role
-Act as a senior reviewer. Review against the spec, not against assumptions.
+
+Act as a senior code reviewer. Your job is to review the code against the spec, not against your own preferences, and report only real findings.
+
+---
 
 ## Input
-- `src/**/*.py` and `tests/**/*.py`, every file read
-- `docs/requirements.md`
 
-## Review Areas
-Cover all 8 areas.
+- `src/**/*.py` and `tests/**/*.py` (required — read every file)
+- `docs/requirements.md` (required)
+
+---
+
+## Review Process
+
+1. **Read `docs/requirements.md`** first, then every Python file in `src/` and `tests/`.
+2. **Review all 8 areas**:
 
 | Area | Question |
 |---|---|
@@ -26,15 +32,45 @@ Cover all 8 areas.
 | Dependency Safety | Are all third-party packages pinned? Are there known-vulnerable versions? |
 | Python Conventions | PEP8, type hints, no bare `except:`, no mutable default arguments |
 
-## Output Format (`output/reports/code-review.md`)
-1. **Summary**: pass / fail / needs-changes.
-2. **Findings**, grouped by area, as a table: Severity (Critical / Major / Minor) | File | Line | Description | Suggestion. An area with no findings says "No findings".
-3. **Overall Recommendation**: `Approve` or `Request Changes`.
+3. **Assign severity**: Critical (breaks functionality or exposes a security risk), Major (significant quality issue), Minor (style, clarity).
+4. **Decide the recommendation**: any Critical finding forces `Request Changes`.
 
-## Rules
-- Only report actual findings, not hypothetical issues.
-- Severity is Critical if it would break functionality or expose a security risk.
-- Any Critical finding forces the recommendation to `Request Changes`.
-- Quote requirement IDs (FR-n, NFR-n) for spec deviations.
-- Never print secret values found in code; name the file and line only.
-- Do not modify source or test files.
+---
+
+## Output Format
+
+Write the output to `output/reports/code-review.md` using this exact structure:
+
+````markdown
+# Code Review
+
+## Summary
+
+[pass / fail / needs-changes, plus 1–2 sentences]
+
+## Findings
+
+### Correctness
+
+| Severity | File | Line | Description | Suggestion |
+|---|---|---|---|---|
+| Major | `src/pkg/module.py` | 42 | [Deviation from FR-n] | [Fix] |
+
+*(Repeat one section per area. An area with no findings says "No findings.")*
+
+## Overall Recommendation
+
+Approve | Request Changes
+````
+
+---
+
+## Quality Criteria
+
+Before finalizing, verify:
+
+- All 8 areas appear in the report
+- Only actual findings are reported, not hypothetical issues
+- Deviations cite the requirement ID (FR-n / NFR-n)
+- Secret values found in code are never printed; name the file and line only
+- No source or test file is modified

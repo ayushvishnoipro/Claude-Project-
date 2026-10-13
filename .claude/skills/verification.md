@@ -1,38 +1,83 @@
 ---
 name: verification
-description: QA method that runs the test suite, checks coverage and acceptance-criteria mapping, and writes output/test-results/results.md with a PASS/FAIL verdict. Use for final verification before a PR.
+description: Run the test suite and coverage, map acceptance criteria to tests, and issue a PASS/FAIL verdict in output/test-results/results.md
 ---
 
-# Verification
-
 ## Role
-Act as a QA engineer running final acceptance testing.
+
+Act as a QA engineer running final acceptance testing. Your job is to report what the tests actually show and give a verdict the PR gate can trust.
+
+---
 
 ## Input
-- `src/` and `tests/`
-- `docs/requirements.md`
+
+- `src/` and `tests/` (required)
+- `docs/requirements.md` (required)
 - `output/reports/code-review.md` (to check for open Critical findings)
 
+---
+
 ## Verification Steps
-1. Run unit tests: `pytest tests/unit/ -v`
-2. Run integration tests: `pytest tests/integration/ -v`
-3. Check coverage: `pytest --cov=src --cov-report=term-missing`
-4. Validate that each acceptance criterion in `docs/requirements.md` is covered by at least one test.
-5. Flag any requirement (FR-n) with zero test coverage as a gap.
 
-If a command cannot run (missing pytest, missing pytest-cov, no tests), record the exact error and set the verdict to FAIL. Do not fix anything.
+1. **Run unit tests**: `pytest tests/unit/ -v`
+2. **Run integration tests**: `pytest tests/integration/ -v`
+3. **Check coverage**: `pytest --cov=src --cov-report=term-missing`
+4. **Map criteria**: confirm each acceptance criterion in `docs/requirements.md` is covered by at least one test.
+5. **Find gaps**: flag any requirement (FR-n) with zero test coverage.
+6. **Check code review**: confirm no Critical finding is still open.
 
-## Output Format (`output/test-results/results.md`)
-1. **Test Run Summary**: total / passed / failed / skipped.
-2. **Coverage Report**: overall % and per-module breakdown.
-3. **Acceptance Criteria Coverage**: table mapping each criterion (with FR ID) to its test(s).
-4. **Gaps**: any requirement with no test coverage, or "None".
-5. **Final Verdict**: a line exactly `Final Verdict: PASS` or `Final Verdict: FAIL`.
-6. If FAIL, a list of exactly what must be fixed before a PR can be created.
+If a command cannot run (missing pytest or pytest-cov, no tests), record the exact error and set the verdict to FAIL. Do not fix anything.
 
-## Pass Criteria
-All unit tests pass, all integration tests pass, coverage is 80% or more, and no Critical code-review finding is open. If any is not met, the verdict is FAIL. There is no override.
+**Pass criteria**: all unit tests pass, all integration tests pass, coverage ≥ 80%, no open Critical code-review finding. If any is unmet the verdict is FAIL. There is no override.
 
-## Rules
-- Report real command output only. Never estimate numbers.
-- Do not modify source or test files.
+---
+
+## Output Format
+
+Write the output to `output/test-results/results.md` using this exact structure:
+
+````markdown
+# Verification Results
+
+## Test Run Summary
+
+| Suite | Total | Passed | Failed | Skipped |
+|---|---|---|---|---|
+| Unit | 0 | 0 | 0 | 0 |
+| Integration | 0 | 0 | 0 | 0 |
+
+## Coverage Report
+
+Overall: [N]%
+
+| Module | Coverage | Missing Lines |
+|---|---|---|
+| `src/pkg/module.py` | [N]% | [lines] |
+
+## Acceptance Criteria Coverage
+
+| Requirement | Criterion | Test(s) |
+|---|---|---|
+| FR-1 | [Given/When/Then summary] | `tests/unit/test_x.py::test_y` |
+
+## Gaps
+
+[Requirements with no test coverage, or "None."]
+
+## Final Verdict
+
+Final Verdict: PASS | FAIL
+
+[If FAIL: exact list of what must be fixed before a PR can be created.]
+````
+
+---
+
+## Quality Criteria
+
+Before finalizing, verify:
+
+- Every number comes from real command output; nothing is estimated
+- The verdict line is exactly `Final Verdict: PASS` or `Final Verdict: FAIL`
+- Every FR appears in the criteria table or in Gaps
+- No source or test file is modified

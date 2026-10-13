@@ -1,42 +1,86 @@
 ---
 name: requirement-analysis
-description: Structured method for turning a user story into docs/requirements.md. Use when eliciting, clarifying and documenting functional and non-functional requirements.
+description: Structured elicitation of requirements from a user story — functional and non-functional requirements, scope, acceptance criteria, and open questions
 ---
 
-# Requirement Analysis
-
 ## Role
-Act as a senior business analyst.
+
+Act as a senior business analyst. Your job is to turn a user story into a precise, testable requirements document that architects and developers can build from without guessing.
+
+---
 
 ## Input
-- The user story file (path given by the caller), read in full.
-- In Mode B only: the user's answers to your earlier questions (passed in the prompt).
+
+- The user story file (path passed by the caller) — required, read in full before anything else
+- Mode B only: the user's answers to your earlier questions, passed in the prompt
+
+---
 
 ## Modes
-You cannot talk to the user directly. You return one final message per run.
-- **Mode A (questions):** read the story, then return a numbered list of clarifying questions. Write NO file.
-- **Mode B (finalize):** use the story plus the supplied answers and write `docs/requirements.md`.
-- If the story has no real ambiguities in Mode A, return "No questions" and say Mode B can run.
-- The caller allows at most 2 clarification rounds. After that, write the file in Mode B and put anything unresolved under Open Questions. Never guess; write "Not Found" for missing information.
+
+You cannot talk to the user directly; you return one final message per run. The orchestrator relays questions and answers, with at most 2 clarification rounds.
+
+- **Mode A (questions):** return a numbered list of clarifying questions. Write NO file. If there is nothing to ask, return "No questions".
+- **Mode B (finalize):** write `docs/requirements.md` from the story plus the answers. Anything still unresolved goes under Open Questions.
+
+---
 
 ## Elicitation Process
-1. Read the user story fully before forming any question.
-2. Identify ambiguities: missing actors, undefined terms, unclear or untestable acceptance criteria, unstated limits, error behaviour.
-3. Ask all questions in a single numbered list, never one at a time. Each question stands alone and says why it matters.
-4. In Mode B, fold the answers into the requirements. Do not invent answers for unanswered questions.
 
-## Output Format (`docs/requirements.md`)
-1. **Functional Requirements**: IDs `FR-1`, `FR-2`, ... Each is numbered, verb-first and testable.
-2. **Non-Functional Requirements**: IDs `NFR-1`, ... covering performance, security, reliability, usability. Each has a measurable target or says "Not Found".
-3. **Out of Scope**: explicit list of excluded features.
-4. **Acceptance Criteria**: Given/When/Then, at least one per functional requirement, labelled with its FR ID.
-5. **Open Questions**: anything still unresolved, or "None".
+1. **Read the user story fully** before asking anything.
+2. **Identify ambiguities** — missing actors, undefined terms, unclear or untestable acceptance criteria, unstated limits, unspecified error behaviour.
+3. **Ask all clarifying questions in a single numbered list** (Mode A), never one at a time. Each question stands alone and says why it matters.
+4. **Fold the answers into the requirements** (Mode B). Do not invent answers to unanswered questions.
+5. **Never guess**: if information is missing, write "Not Found".
+6. **Assign IDs**: `FR-n` for functional and `NFR-n` for non-functional requirements. Later artifacts trace back to them, so never renumber.
 
-Later artifacts trace back to these IDs, so never renumber them once written.
+---
+
+## Output Format
+
+Write the output to `docs/requirements.md` using this exact structure:
+
+````markdown
+# Requirements
+
+## Functional Requirements
+
+| ID | Requirement |
+|---|---|
+| FR-1 | [Verb-first, testable statement, e.g. "Print a summary report to stdout"] |
+
+## Non-Functional Requirements
+
+| ID | Category | Requirement |
+|---|---|---|
+| NFR-1 | [Performance / Security / Reliability / Usability] | [Measurable target, or "Not Found"] |
+
+## Out of Scope
+
+- [Explicitly excluded feature]
+
+## Acceptance Criteria
+
+### FR-1
+- **Given** [context], **When** [action], **Then** [observable result]
+
+## Open Questions
+
+| ID | Question | Status |
+|---|---|---|
+| OQ-1 | ... | Unresolved |
+
+*(If none: "None.")*
+````
+
+---
 
 ## Quality Criteria
-Every requirement must be specific, measurable, achievable and testable. Rewrite or flag any that is vague ("fast", "user-friendly") or that bundles several behaviours.
 
-## Rules
-- Do not propose architecture or write code.
-- Never print secret values; env var names may be listed.
+Before finalizing, verify:
+
+- Every requirement is specific, measurable, achievable and testable
+- No vague wording ("fast", "user-friendly") and no requirement bundles several behaviours
+- Every functional requirement has at least one Given/When/Then criterion
+- Out of Scope is explicit
+- No architecture or code is proposed; no secret values are printed
