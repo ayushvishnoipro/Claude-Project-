@@ -1,14 +1,39 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "automated-documentation-sync"
+name = "todo-app"
 version = "0.1.0"
-description = "Agentic SDLC pipeline driven by Claude Code"
-requires-python = ">=3.11"
+description = "Simple in-memory command-line to-do app"
+readme = "README.md"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-cov"]
+dev = ["pytest", "pytest-cov", "ruff", "mypy"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.coverage.run]
+source = ["todo"]
+
+[tool.coverage.report]
+show_missing = true
 
 [tool.ruff]
 line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+# The code deliberately uses typing.Dict/List/Tuple/Callable and a joined
+# HELP_TEXT, as documented in docs/architecture.md.
+ignore = ["UP006", "UP035", "FLY002"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true

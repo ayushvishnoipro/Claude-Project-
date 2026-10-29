@@ -10,46 +10,71 @@ Validate the entire pipeline works by running it against a concrete, well-define
 - Git repository initialized with a remote on GitHub (needed for `gh pr create` in the PR agent)
 - `gh` CLI authenticated: `gh auth status`
 - `pytest` available in the environment
+- Python 3.11+ and `pip` available (the app installs `streamlit` as its one runtime dependency)
 
 ---
 
 ## Step 6.1 — Create the Sample User Story
 
-Create `user-stories/user-story-template.md` with a complete, realistic Python user story that is:
+Create `user-stories/user-story-template.md` (template/example) and `user-stories/user-story-1.md` (the file the pipeline processes) with a complete, realistic Python user story that is:
 - Simple enough to implement in a single session
 - Complex enough to exercise all pipeline stages meaningfully
 - Self-contained (no external APIs or services required)
 
-**Recommended story — CSV Summary CLI Tool:**
+**Recommended story — Streamlit Todo App:**
 
 ```markdown
-# User Story: CSV Summary Report Generator
+# User Story: Streamlit Todo App
 
-**As a** data analyst,  
-**I want** a CLI tool that reads a CSV file and outputs a summary report,  
-**So that** I can quickly understand the shape and content of any dataset without writing custom scripts.
+**As a** busy professional,  
+**I want** a small web-based todo app built with Python and Streamlit that stores my tasks locally,  
+**So that** I can add, view, complete, edit, and delete tasks in my browser without any account or external service.
 
 ## Details
-- The tool is invoked from the command line: `python -m csv_summary <path-to-csv>`
-- It reads the CSV file and produces a summary report printed to stdout
-- The report must include:
-  - Total row count (excluding header)
-  - Column names and their inferred data types (numeric, text, date)
-  - For numeric columns: min, max, mean, and count of null values
-  - For text columns: count of unique values and count of null values
-  - For date columns: earliest and latest date and count of null values
-- If the file does not exist, print a clear error and exit with code 1
-- If the file is empty or has only a header row, print a message and exit with code 0
-- The tool must handle CSV files up to 100MB without running out of memory
+- The app is a Python application built with Streamlit, started from the command line: `streamlit run src/todo_app/app.py`
+- The page shows:
+  - A title and a summary line, e.g. "2 of 5 tasks completed"
+  - An "Add task" form: a text input and an "Add" button
+  - A filter control with three options: All, Open, Done (default: All)
+  - The task list, ordered by ID ascending. Each task row shows a checkbox (checked = done), the title, an "Edit" control, and a "Delete" button
+  - A "Clear completed" button that removes all done tasks
+- Adding a task:
+  - The title is trimmed of leading and trailing whitespace
+  - An empty, whitespace-only, or over-200-character title is rejected with a visible error message and no task is created
+  - On success the input is cleared and the new task appears as open
+- Toggling the checkbox marks a task done (recording a completion time) or open again (clearing it)
+- Editing a task changes its title, using the same validation as adding
+- Deleting a task removes it; task IDs are positive integers, assigned incrementally and never reused, even after deletion
+- If there are no tasks (or none match the current filter), the page shows "No tasks found"
+- Tasks are stored in a local JSON file:
+  - Default location: `~/.todo_app.json`; overridable with the `TODO_FILE` environment variable
+  - The file is created on the first change if it does not exist
+  - Format: `{"version": 1, "next_id": <int>, "tasks": [ ... ]}` where each task has `id`, `title`, `done`, `created_at`, `completed_at`
+  - Writes are atomic (write to a temp file in the same directory, then replace) so a crash never leaves a half-written file
+  - UTF-8 encoding, so non-ASCII titles work
+- If the JSON file is corrupted, unreadable, or has an unsupported version, the page shows a clear error message and stops; the file is never overwritten or repaired automatically
+- Data persists across browser refreshes and app restarts
+- Code structure: business logic (models, validation, storage) lives in modules separate from the Streamlit UI so it can be tested without a browser
+- Python 3.11+; `streamlit` is the only runtime dependency and must be pinned to an exact version; `pytest` and `pytest-cov` are dev-only
+- Must run on Windows, Linux, and macOS (use `pathlib`, no OS-specific code)
+- Not designed for multiple simultaneous users or processes writing the same file (documented limitation, not an error)
 
 ## Acceptance Criteria
-1. Given a valid CSV, the tool prints a summary report to stdout
-2. Given a non-existent file path, the tool prints an error and exits with code 1
-3. Given a CSV with only a header row, the tool prints "No data rows found" and exits with code 0
-4. Numeric columns show min, max, mean, and null count
-5. Text columns show unique count and null count
-6. Date columns (ISO 8601 format) show earliest, latest, and null count
-7. The tool processes a 100MB CSV file without exceeding 512MB memory usage
+1. Given a valid title, adding a task creates an open task that appears in the list
+2. Given an empty, whitespace-only, or over-200-character title, the app shows an error and creates no task
+3. Ticking a task's checkbox marks it done and records a completion time; unticking reopens it and clears the time
+4. Editing a task with a valid title updates it; an invalid title shows an error and leaves the task unchanged
+5. Deleting a task removes it from the list and the file
+6. IDs are never reused after a task is deleted
+7. The filter shows only open tasks, only done tasks, or all tasks as selected
+8. "Clear completed" removes only done tasks
+9. With no tasks (or none matching the filter), the page shows "No tasks found"
+10. The summary line shows the correct completed/total counts after every change
+11. Tasks persist between app restarts (read from and written to the JSON file)
+12. `TODO_FILE` overrides the default storage location
+13. A corrupted JSON file shows a clear error, stops the app, and leaves the file unmodified
+14. Non-ASCII titles (e.g. "Café ☕") are stored and displayed correctly
+15. The app starts without errors using `streamlit run src/todo_app/app.py`
 ```
 
 ---
@@ -73,35 +98,44 @@ git remote add origin https://github.com/<your-username>/automated-documentation
 git push -u origin main
 ```
 
+If you ran an earlier story, clear its artifacts first. The orchestrator skips any step whose output file already exists:
+
+```bash
+rm -f docs/requirements.md docs/architecture.md docs/design-review.md docs/impl-plan.md
+rm -rf src/* tests/unit/* tests/integration/* output/reports/* output/test-results/*
+# Keep docs/changelog.md and all .gitkeep files
+```
+
 ---
 
 ## Step 6.3 — Run the Pipeline
 
-Open Claude Code in the project directory and invoke the orchestrator:
+Start the orchestrator as the main-session agent (subagents cannot spawn subagents), then give it the story:
 
 ```
-@orchestrator process user-stories/user-story-template.md
+claude --agent orchestrator
+process user-stories/user-story-1.md
 ```
 
 ### Expected interaction flow:
 
 **Step 1 — Requirements (L1)**
-- Orchestrator spawns requirements agent
-- Agent reads the user story, identifies any ambiguities, asks clarifying questions
-- You answer (e.g., "use pandas for CSV reading", "output format is plain text, not JSON")
-- Agent writes `docs/requirements.md`
+- Orchestrator spawns requirements agent (Mode A: returns questions, writes nothing)
+- Agent reads the user story, identifies any ambiguities, returns clarifying questions via the orchestrator
+- You answer (e.g., "Streamlit 1.x pinned, no other runtime deps", "use `st.session_state` for UI state", "JSON storage only")
+- Orchestrator re-spawns the agent with your answers (Mode B); agent writes `docs/requirements.md`
 - Orchestrator gates on the file and proceeds
 
 **Step 2 — Architecture (L1)**
-- Orchestrator spawns architecture agent
-- Agent reads requirements, proposes a Python module structure
-- You may approve or ask for adjustments (e.g., "use argparse not click")
-- Agent writes `docs/architecture.md`
+- Orchestrator spawns architecture agent (Mode A: proposal + questions)
+- Agent reads requirements, proposes a Python module structure (e.g., `models.py`, `storage.py`, `app.py`) and how the Streamlit UI calls the logic layer
+- You may approve or ask for adjustments (e.g., "use `st.form` for the add task input", "keep `app.py` under 150 lines")
+- Agent writes `docs/architecture.md` (Mode B)
 - Orchestrator gates and proceeds
 
 **Step 3 — Design Review (L2)**
 - Agent runs, writes `docs/design-review.md`
-- Orchestrator shows the review (risks, decisions, required changes)
+- Orchestrator shows the review (risks, decisions, required changes), such as Streamlit's rerun-on-every-interaction model and session state handling
 - You type `y` to continue
 
 **Step 4 — Implementation Planning (L2)**
@@ -110,8 +144,8 @@ Open Claude Code in the project directory and invoke the orchestrator:
 - You type `y` to continue
 
 **Step 5 — Implementation (L2)**
-- Agent runs, writes `src/csv_summary/__init__.py`, `src/csv_summary/cli.py`, `src/csv_summary/analyzer.py`, etc.
-- Agent writes `tests/unit/test_analyzer.py`, `tests/integration/test_cli.py`
+- Agent runs, writes `src/todo_app/__init__.py`, `src/todo_app/models.py`, `src/todo_app/storage.py`, `src/todo_app/app.py`, etc.
+- Agent writes `tests/unit/test_models.py`, `tests/unit/test_storage.py`, `tests/integration/test_app.py` (UI tests using Streamlit's `AppTest`)
 - Agent runs pytest, reports results
 - Orchestrator shows file list and test summary
 - You type `y` to continue
@@ -132,10 +166,10 @@ Open Claude Code in the project directory and invoke the orchestrator:
 - You type `y` to continue to PR
 
 **Step 9 — PR (L3)**
-- Agent generates full PR description draft
+- Agent generates full PR description draft (draft mode, nothing created)
 - Orchestrator shows the draft
 - You type `y` to confirm
-- Agent runs `gh pr create`
+- Agent runs `gh pr create` (create mode)
 - Orchestrator displays the PR URL
 
 ---
@@ -155,21 +189,24 @@ After the pipeline completes, check each artifact:
 - [ ] At least 3 Python source files in `src/`
 - [ ] All files have type hints
 - [ ] No hardcoded secrets or credentials
-- [ ] `python -m csv_summary --help` works
+- [ ] Business logic (`models.py`, `storage.py`) does not import Streamlit
+- [ ] `streamlit` is pinned to an exact version in `pyproject.toml`
+- [ ] `pip install -e .` then `streamlit run src/todo_app/app.py` opens the app in the browser
+- [ ] Manual check: add a task, tick it, edit it, filter it, delete it, restart the app, confirm data persisted
 
 ### tests/ artifacts
 - [ ] Unit tests in `tests/unit/`
-- [ ] Integration tests in `tests/integration/`
+- [ ] Integration tests in `tests/integration/` (Streamlit `AppTest`)
 - [ ] `pytest tests/ -v` passes with 0 failures
 
 ### output/ artifacts
 - [ ] `output/reports/doc-sync-report.md` exists
 - [ ] `output/reports/code-review.md` has an Overall Recommendation
-- [ ] `output/test-results/results.md` has Final Verdict: PASS
+- [ ] `output/test-results/results.md` has Final Verdict: PASS and maps all 15 acceptance criteria to tests
 
 ### GitHub
 - [ ] PR exists with all 5 required sections (Summary, Changes Made, Test Evidence, Known Limitations, Reviewer Checklist)
-- [ ] PR description ends with the attribution line
+- [ ] PR description ends with the attribution line: `Generated by the agentic SDLC pipeline (Claude Code)`
 
 ---
 
@@ -178,17 +215,20 @@ After the pipeline completes, check each artifact:
 If any pipeline run outputs were not auto-committed by the agents, commit them:
 
 ```bash
-git add docs/ src/ tests/ output/
-git commit -m "feat: run agentic pipeline on CSV summary user story"
+git add docs/ src/ tests/ pyproject.toml user-stories/
+git commit -m "feat: run agentic pipeline on Streamlit todo app user story"
 ```
+
+`output/` is gitignored by design, so reports and test results are not committed.
 
 ---
 
 ## Deliverables Checklist
-- [ ] `user-stories/user-story-template.md` created with the CSV Summary story
+- [ ] `user-stories/user-story-1.md` created with the Streamlit todo story (and `user-story-template.md` kept as the template)
 - [ ] Full pipeline run completed without manual intervention beyond L1/L2/L3 interaction points
 - [ ] All 9 artifact files validated
 - [ ] `pytest tests/ -v` passes
+- [ ] The app runs with `streamlit run src/todo_app/app.py`
 - [ ] GitHub PR created with correct description
 - [ ] All artifacts committed
 
@@ -198,9 +238,14 @@ git commit -m "feat: run agentic pipeline on CSV summary user story"
 
 | Problem | Likely cause | Fix |
 |---|---|---|
-| Gate fails on `docs/requirements.md` | Requirements agent returned early | Re-invoke: `@orchestrator resume step 1` |
-| `gh pr create` fails | No GitHub remote or not authenticated | Run `gh auth login`, set remote |
-| pytest fails | Implementation agent missed a case | Run `@implementation` with the failing test as context |
+| Gate fails on `docs/requirements.md` | Requirements agent returned early | Ask the orchestrator to retry Step 1 |
+| Orchestrator skips Steps 1–2 | Old `docs/requirements.md` / `architecture.md` still present | Delete stale artifacts (Step 6.2) or confirm the skip was intended |
+| Orchestrator cannot spawn agents | Started with plain `claude` or run as a subagent | Start with `claude --agent orchestrator` |
+| `gh pr create` fails | No GitHub remote or not authenticated | Run `gh auth login`, set remote, push the branch |
+| `ModuleNotFoundError: streamlit` | Dependencies not installed | `pip install -e .[dev]` |
+| `ModuleNotFoundError: todo_app` when running tests | Package not installed or `src/` not on path | `pip install -e .` or set `pythonpath = ["src"]` in pytest config |
+| `AppTest` tests fail on import | Streamlit version too old for `streamlit.testing.v1` | Pin Streamlit 1.28 or newer |
+| pytest fails | Implementation agent missed a case | Re-run the implementation step with the failing test as context |
 | Hook script permission denied | Scripts not executable | `chmod +x .claude/hooks/*.sh` |
 | Coverage < 80% | Tests incomplete | Add tests manually or re-run verification agent |
 
@@ -208,6 +253,7 @@ git commit -m "feat: run agentic pipeline on CSV summary user story"
 
 ## Success Definition
 The pipeline is considered complete when:
-1. A user story dropped into `user-stories/` can be processed to a merged (or mergeable) PR by invoking `@orchestrator` once
+1. A user story dropped into `user-stories/` can be processed to a merged (or mergeable) PR by running the orchestrator once
 2. All 9 specialist agents run without being invoked directly by the user
 3. Human interaction is limited to: answering L1 questions, approving L2 steps, and confirming the L3 PR
+4. The generated Streamlit todo app launches and satisfies all 15 acceptance criteria

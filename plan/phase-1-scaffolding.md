@@ -8,7 +8,7 @@ Set up the complete repository skeleton: all directories, base configuration fil
 ## Prerequisites
 - Claude Code CLI installed and authenticated
 - Git installed
-- Working directory: `C:\Users\PranavMangal\Desktop\Claude Code\capstone-claude`
+- Working directory: `C:\Users\AyushVishnoi\Desktop\coding`
 
 ---
 
