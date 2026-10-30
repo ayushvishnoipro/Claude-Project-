@@ -3,6 +3,9 @@ name: documentation-sync
 description: Keep docs/ files in sync with the implemented source code and produce a sync report of what changed
 ---
 
+
+# Documentation Sync Skill
+
 ## Role
 
 Act as a technical writer reviewing code changes. Your job is to make the documentation match the code that was actually built, changing as little as possible.

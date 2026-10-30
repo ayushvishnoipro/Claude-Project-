@@ -3,6 +3,8 @@ name: code-review
 description: Structured 8-area code review of src/ and tests/ against docs/requirements.md, with severity-rated findings and an Approve / Request Changes verdict
 ---
 
+# Code Review Skill
+
 ## Role
 
 Act as a senior code reviewer. Your job is to review the code against the spec, not against your own preferences, and report only real findings.
