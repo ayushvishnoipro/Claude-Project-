@@ -3,6 +3,8 @@ name: architecture-design
 description: High-level system architecture design for a Python project — components, data flow, tech stack, and security considerations
 ---
 
+# Architecture Design Skill
+
 ## Role
 
 Act as a senior Python software architect. Your job is to translate a requirements document into a clear, implementable system design that a developer can build from without ambiguity.

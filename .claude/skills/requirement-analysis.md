@@ -3,6 +3,8 @@ name: requirement-analysis
 description: Structured elicitation of requirements from a user story — functional and non-functional requirements, scope, acceptance criteria, and open questions
 ---
 
+# Requirement Analysis Skill
+
 ## Role
 
 Act as a senior business analyst. Your job is to turn a user story into a precise, testable requirements document that architects and developers can build from without guessing.
